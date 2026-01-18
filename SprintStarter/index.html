@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <title>Sprint Starter</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      flex-direction: column;
+      position: relative; 
+    }
+    
+    /* Main Game Button */
+    button#startBtn {
+      font-size: 32px;
+      padding: 20px 40px;
+      border-radius: 12px;
+      border: none;
+      background: white;
+      color: black;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+
+    #text {
+      font-size: 40px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  
+  <button id="startBtn">START</button>
+  <div id="text" style="display:none;"></div>
+
+  <audio id="marksAudio" preload="auto">
+    <source src="on_your_marks.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="setAudio" preload="auto">
+    <source src="set.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="bang" preload="auto">
+    <source src="bang.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const btn = document.getElementById("startBtn");
+    const text = document.getElementById("text");
+    const marksAudio = document.getElementById("marksAudio");
+    const setAudio = document.getElementById("setAudio");
+    const bang = document.getElementById("bang");
+
+    // Utility function to wait X milliseconds
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Safe audio play function
+    function playAudio(audio) {
+      return new Promise(resolve => {
+        audio.currentTime = 0;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => resolve()).catch(() => resolve());
+        } else {
+          resolve();
+        }
+      });
+    }
+
+    btn.onclick = async () => {
+      btn.style.display = "none";
+      text.style.display = "block";
+
+      // --- iOS/Android Audio Unlock ---
+      [marksAudio, setAudio, bang].forEach(audio => {
+        audio.currentTime = 0;
+        audio.play().catch(() => {}); // try to play
+        audio.pause();                 // pause immediately
+      });
+
+      // On your marks
+      text.innerText = "On your marks";
+      await playAudio(marksAudio);
+      await wait(7500);  // 7.5 seconds delay
+
+      // Set
+      text.innerText = "Set";
+      await playAudio(setAudio);
+      await wait(3000 + Math.random() * 3000); // 3–6 seconds delay
+
+      // GO!
+      text.innerText = "GO!";
+      await playAudio(bang);
+      navigator.vibrate?.(200); // vibrate if supported
+
+      await wait(2000);
+      text.style.display = "none";
+      btn.style.display = "block";
+    };
+
+    // Register service worker for offline support
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+  </script>
+</body>
+</html>
